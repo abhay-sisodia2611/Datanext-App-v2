@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     host: true,
     allowedHosts: [
-      "042bb4d5-5fd1-4338-a1e8-ca9cf3b3ca95-00-2yvkqevovdvxf.kirk.replit.dev"
+      "4a5dbe52-a634-4327-b720-1193ba8ee920-00-3r5pcnc0raih5.kirk.replit.dev"
     ]
   }
 });
