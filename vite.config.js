@@ -6,8 +6,7 @@ export default defineConfig({
   server: {
     host: true,
     allowedHosts: [
-      "14e0cb77-0caf-4917-ae09-24ae50ec542e-00-aymx7w93d2i4.sisko.replit.dev",
-      ".replit.dev"
+      "c1f2eaae-2a42-4df8-adf0-6b4b13261916-00-2s68rw7phl4x6.riker.replit.dev"
     ]
   }
 });
