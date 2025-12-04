@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { palette, radii, shadow } from './theme';
 import { decisionCriteria as criteriaSeed, reports as seedReports, getStats } from './data';
 
@@ -121,12 +121,6 @@ const ReportCatalog = ({ reports, onRowClick }) => {
     .filter(r => filterSource === 'All' || r.sourceType === filterSource)
     .filter(r => search === '' || r.name.toLowerCase().includes(search.toLowerCase()) || r.id.toLowerCase().includes(search.toLowerCase()));
 
-  const statusColors = {
-    Needed: { bg: palette.primarySoft, text: palette.primaryStrong },
-    Redundant: { bg: '#F3F4F6', text: palette.muted },
-    Deprecated: { bg: '#FEF2F2', text: palette.warning }
-  };
-
   const sourceColors = {
     'SAP ABAP': { bg: '#FEF3C7', text: '#B45309' },
     'SAP BW': { bg: '#DBEAFE', text: '#1D4ED8' },
@@ -154,7 +148,7 @@ const ReportCatalog = ({ reports, onRowClick }) => {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <thead style={{ position: 'sticky', top: 0, background: palette.surface }}>
             <tr style={{ background: palette.bg }}>
-              {['Report ID', 'Name', 'Source', 'Functional Area', 'Category', 'Data Sources', 'KPIs', 'Refresh', 'Owner', 'Status', 'Migration Path'].map(header => (
+              {['Report ID', 'Name', 'Source', 'Functional Area', 'Category', 'Data Sources', 'KPIs', 'Refresh', 'Owner'].map(header => (
                 <th key={header} style={{ padding: '10px 8px', textAlign: 'left', fontWeight: 700, color: palette.text, borderBottom: `2px solid ${palette.border}`, whiteSpace: 'nowrap' }}>{header}</th>
               ))}
             </tr>
@@ -175,12 +169,6 @@ const ReportCatalog = ({ reports, onRowClick }) => {
                 <td style={{ padding: '10px 8px', borderBottom: `1px solid ${palette.border}`, color: palette.muted }}>{report.kpiExamples.join(', ')}</td>
                 <td style={{ padding: '10px 8px', borderBottom: `1px solid ${palette.border}`, color: palette.muted }}>{report.refreshFrequency}</td>
                 <td style={{ padding: '10px 8px', borderBottom: `1px solid ${palette.border}`, color: palette.text }}>{report.businessOwner}</td>
-                <td style={{ padding: '10px 8px', borderBottom: `1px solid ${palette.border}` }}>
-                  <span style={{ padding: '4px 8px', borderRadius: radii.sm, background: statusColors[report.status].bg, color: statusColors[report.status].text, fontWeight: 700 }}>
-                    {report.status}
-                  </span>
-                </td>
-                <td style={{ padding: '10px 8px', borderBottom: `1px solid ${palette.border}`, color: palette.text, fontWeight: 600 }}>{report.migrationPath}</td>
               </tr>
             ))}
           </tbody>
@@ -220,16 +208,17 @@ const DecisionCriteriaPanel = ({ criteria, onWeightChange }) => (
 );
 
 const pathColors = {
-  'Embedded Analytics': palette.primary,
-  'Datasphere/BDC': palette.accentPurple,
-  'Data Lake': palette.accentBlue,
+  'S/4HANA Embedded Analytics': palette.primary,
+  'SAP Datasphere / BDC': palette.accentPurple,
+  'Databricks': palette.accentBlue,
+  'SAP BW HANA Cloud': palette.accentGreen || '#10B981',
   'Retain': palette.primaryStrong,
   'Retire': palette.warning
 };
 
 const MigrationMatrix = ({ reports }) => {
   const sources = ['SAP ABAP', 'SAP BW', 'Databricks'];
-  const targets = ['Embedded Analytics', 'Datasphere/BDC', 'Data Lake', 'Retain', 'Retire'];
+  const targets = ['S/4HANA Embedded Analytics', 'SAP Datasphere / BDC', 'Databricks', 'SAP BW HANA Cloud', 'Retain', 'Retire'];
   const counts = {};
   sources.forEach(s => { counts[s] = {}; targets.forEach(t => { counts[s][t] = 0; }); });
   reports.forEach(r => { counts[r.sourceType][r.migrationPath] += 1; });
@@ -243,7 +232,7 @@ const MigrationMatrix = ({ reports }) => {
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, border: `1px solid ${palette.border}`, borderRadius: radii.md, overflow: 'hidden' }}>
         <thead>
           <tr>
-            <th style={{ padding: 12, textAlign: 'left', borderBottom: `2px solid ${palette.border}`, background: palette.bg }}>Source → Path</th>
+            <th style={{ padding: 12, textAlign: 'left', borderBottom: `2px solid ${palette.border}`, background: palette.bg }}>Source ΓåÆ Path</th>
             {targets.map(t => (
               <th key={t} style={{ padding: 12, textAlign: 'center', borderBottom: `2px solid ${palette.border}`, background: palette.bg, color: palette.text }}>{t}</th>
             ))}
@@ -286,15 +275,15 @@ const MigrationMatrix = ({ reports }) => {
           <div style={{ fontWeight: 700, color: palette.text }}>Risk Hotspots</div>
           <ul style={{ margin: '6px 0 0', paddingLeft: 16, color: palette.muted, fontSize: 13, lineHeight: 1.6 }}>
             <li>High Retire counts need business validation</li>
-            <li>High-complexity Data Lake moves need data readiness checks</li>
-            <li>Ownership gaps delay migrations—fill before execution</li>
+            <li>High-complexity Databricks or BW HANA Cloud moves need data readiness checks</li>
+            <li>Ownership gaps delay migrationsΓÇöfill before execution</li>
           </ul>
         </div>
         <div style={{ ...cardStyle, border: `1px solid ${palette.border}` }}>
           <div style={{ fontWeight: 700, color: palette.text }}>Action Queue</div>
           <ul style={{ margin: '6px 0 0', paddingLeft: 16, color: palette.muted, fontSize: 13, lineHeight: 1.6 }}>
-            <li>Prioritize high-usage Datasphere/BDC rebuilds</li>
-            <li>Schedule Data Lake moves with AI/ML dependencies</li>
+            <li>Prioritize high-usage SAP Datasphere / BDC rebuilds</li>
+            <li>Schedule Databricks moves with AI/ML dependencies</li>
             <li>Lock retirements after governance sign-off</li>
           </ul>
         </div>
@@ -352,8 +341,8 @@ const ImplementationPlan = () => (
       <div style={{ ...cardStyle, boxShadow: shadow }}>
         <h4 style={{ margin: '0 0 6px', color: palette.text }}>APIs & Data Model</h4>
         <ul style={{ margin: 0, paddingLeft: 16, color: palette.muted, fontSize: 13 }}>
-          <li>/reports (filters, pagination) · /reports/:id (metadata + lineage refs)</li>
-          <li>/graph (nodes/edges with limits) · /matrix (source → path counts)</li>
+          <li>/reports (filters, pagination) ┬╖ /reports/:id (metadata + lineage refs)</li>
+          <li>/graph (nodes/edges with limits) ┬╖ /matrix (source ΓåÆ path counts)</li>
           <li>/classify (run), /weights (versioned), /export (catalog/matrix/graph)</li>
         </ul>
         <div style={{ marginTop: 10, padding: 10, borderRadius: radii.md, background: palette.bg, color: palette.text, fontSize: 12 }}>Schema anchors: Report, CriteriaScores, Classification, Migration, Relationship</div>
@@ -361,9 +350,9 @@ const ImplementationPlan = () => (
       <div style={{ ...cardStyle, boxShadow: shadow }}>
         <h4 style={{ margin: '0 0 6px', color: palette.text }}>Classification & Paths</h4>
         <ul style={{ margin: 0, paddingLeft: 16, color: palette.muted, fontSize: 13 }}>
-          <li>8 weighted criteria (1-5) with adjustable weights; warning if total ≠ 100</li>
+          <li>8 weighted criteria (1-5) with adjustable weights; warning if total Γëá 100</li>
           <li>Status: Needed / Redundant / Deprecated with confidence + rationale</li>
-          <li>Paths: Embedded, Datasphere/BDC, Data Lake, Retain, Retire; migration matrix</li>
+          <li>Paths: S/4HANA Embedded Analytics, SAP Datasphere / BDC, Databricks, SAP BW HANA Cloud, Retain, Retire; migration matrix</li>
         </ul>
         <div style={{ marginTop: 10, padding: 10, borderRadius: radii.md, background: palette.bg, color: palette.text, fontSize: 12 }}>Exit: Classification run completed; business validation round recorded</div>
       </div>
@@ -390,9 +379,9 @@ const ImplementationPlan = () => (
       <div style={{ ...cardStyle, border: `1px solid ${palette.border}` }}>
         <h4 style={{ margin: '0 0 6px', color: palette.text }}>Risks & Guards</h4>
         <ul style={{ margin: 0, paddingLeft: 16, color: palette.muted, fontSize: 13 }}>
-          <li>Access delays → pre-approved creds, sandbox extracts</li>
-          <li>Incomplete logs → fallback exports, data quality checks</li>
-          <li>Low confidence → business validation loop, overrides logged</li>
+          <li>Access delays ΓåÆ pre-approved creds, sandbox extracts</li>
+          <li>Incomplete logs ΓåÆ fallback exports, data quality checks</li>
+          <li>Low confidence ΓåÆ business validation loop, overrides logged</li>
         </ul>
       </div>
       <div style={{ ...cardStyle, border: `1px solid ${palette.border}` }}>
@@ -514,9 +503,9 @@ const KnowledgeBaseFlow = () => (
 const Sidebar = ({ active, setActive }) => {
   const nav = [
     { id: 'dashboard', label: 'Summary' },
-    { id: 'criteria', label: 'Decision Framework' },
     { id: 'catalog', label: 'Report Catalog' },
     { id: 'graph', label: 'Knowledge Graph' },
+    { id: 'criteria', label: 'Decision Framework' },
     { id: 'matrix', label: 'Migration Matrix' },
     { id: 'walkthrough', label: 'Demo Walkthrough' },
     { id: 'plan', label: 'Implementation Plan' }
@@ -699,13 +688,13 @@ export default function DataNextApp() {
                       <span style={{ fontWeight: 700, color: palette.primary }}>{count}</span>
                     </div>
                     <div style={{ height: 8, background: palette.bg, borderRadius: radii.sm }}>
-                      <div style={{ width: `${(count / stats.total) * 100}%`, height: '100%', background: path === 'Retire' ? palette.warning : path === 'Data Lake' ? palette.accentBlue : palette.primary, borderRadius: radii.sm }} />
+                      <div style={{ width: `${(count / stats.total) * 100}%`, height: '100%', background: pathColors[path] || palette.primary, borderRadius: radii.sm }} />
                     </div>
                   </div>
                 ))}
               </Section>
             </div>
-            <Section title="Knowledge Graph Overview" subtitle="Lineage and dependency view across BW, ABAP, and Data Lake">
+            <Section title="Knowledge Graph Overview" subtitle="Lineage and dependency view across BW, ABAP, and Databricks">
               <KnowledgeGraph reports={seedReports} filter="All" onNodeClick={setSelectedReport} isClassifying={isClassifying} />
             </Section>
             <KnowledgeBaseFlow />
@@ -747,9 +736,9 @@ export default function DataNextApp() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ ...cardStyle, border: `1px solid ${palette.border}` }}>
                   <div style={{ fontWeight: 700, color: palette.text }}>Knowledge Base Coverage</div>
-                  <div style={{ color: palette.muted, fontSize: 13 }}>BW/ECC lineage, Data Lake assets, BI usage, ownership</div>
+                  <div style={{ color: palette.muted, fontSize: 13 }}>BW/ECC lineage, Databricks assets, BI usage, ownership</div>
                   <div style={{ marginTop: 10 }}>
-                    {['SAP BW/ECC', 'Databricks/Lake', 'BI Tools', 'Governance'].map((item, idx) => (
+                    {['SAP BW/ECC', 'Databricks', 'BI Tools', 'Governance'].map((item, idx) => (
                       <div key={item} style={{ marginBottom: 8 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: palette.muted }}>
                           <span>{item}</span>
@@ -765,9 +754,12 @@ export default function DataNextApp() {
                 <div style={{ ...cardStyle, border: `1px solid ${palette.border}` }}>
                   <div style={{ fontWeight: 700, color: palette.text }}>Legend</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6, color: palette.muted, fontSize: 13 }}>
-                    <span>● Needed (green)</span>
-                    <span style={{ color: palette.neutral }}>● Redundant (gray)</span>
-                    <span style={{ color: palette.warning }}>● Deprecated (red)</span>
+                    {[{ label: 'Needed', color: palette.primary }, { label: 'Redundant', color: palette.neutral }, { label: 'Deprecated', color: palette.warning }].map(item => (
+                      <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: item.color, display: 'inline-block' }} />
+                        <span style={{ color: item.color === palette.primary ? palette.text : item.color }}>{item.label}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
                 <div style={{ ...cardStyle, border: `1px solid ${palette.border}` }}>
@@ -775,14 +767,14 @@ export default function DataNextApp() {
                   <ul style={{ margin: 0, paddingLeft: 16, color: palette.muted, fontSize: 13 }}>
                     <li>Highlight high-usage, multi-source reports for BDC rebuild</li>
                     <li>Flag unused greater than 180 days for retirement validation</li>
-                    <li>Show AI/ML readiness for Data Lake candidates</li>
+                    <li>Show AI/ML readiness for Databricks candidates</li>
                   </ul>
                 </div>
                 <div style={{ ...cardStyle, border: `1px solid ${palette.border}` }}>
                   <div style={{ fontWeight: 700, color: palette.text }}>Graph-Powered Actions</div>
                   <ul style={{ margin: 0, paddingLeft: 16, color: palette.muted, fontSize: 13 }}>
                     <li>Summarize report purpose, KPIs, and owners from graph context</li>
-                    <li>Trace lineage hop-by-hop (source → transform → report)</li>
+                    <li>Trace lineage hop-by-hop (source ΓåÆ transform ΓåÆ report)</li>
                     <li>Impact analysis: who is affected if a source changes</li>
                     <li>Similarity search to find duplicates/overlaps</li>
                     <li>Surface candidate migration paths based on connected attributes</li>
@@ -803,9 +795,10 @@ export default function DataNextApp() {
               <div style={{ ...cardStyle, border: `1px solid ${palette.border}` }}>
                 <div style={{ fontWeight: 700, color: palette.text }}>Executive Summary</div>
                 <ul style={{ margin: '6px 0 0', paddingLeft: 16, color: palette.muted, fontSize: 13, lineHeight: 1.6 }}>
-                  <li>{stats.byPath['Embedded Analytics']} to Embedded Analytics</li>
-                  <li>{stats.byPath['Datasphere/BDC']} to Datasphere/BDC</li>
-                  <li>{stats.byPath['Data Lake']} to Data Lake</li>
+                  <li>{stats.byPath['S/4HANA Embedded Analytics']} to S/4HANA Embedded Analytics</li>
+                  <li>{stats.byPath['SAP Datasphere / BDC']} to SAP Datasphere / BDC</li>
+                  <li>{stats.byPath['Databricks']} to Databricks</li>
+                  <li>{stats.byPath['SAP BW HANA Cloud']} to SAP BW HANA Cloud</li>
                   <li>{stats.byPath['Retain']} retained</li>
                   <li>{stats.byPath['Retire']} to Retire</li>
                 </ul>
@@ -813,9 +806,10 @@ export default function DataNextApp() {
               <div style={{ ...cardStyle, border: `1px solid ${palette.border}` }}>
                 <div style={{ fontWeight: 700, color: palette.text }}>Decision Gates</div>
                 <ul style={{ margin: '6px 0 0', paddingLeft: 16, color: palette.muted, fontSize: 13, lineHeight: 1.6 }}>
-                  <li>Embedded: low complexity + real-time</li>
-                  <li>Datasphere/BDC: high reuse + high value</li>
-                  <li>Data Lake: high AI/ML need or high complexity</li>
+                  <li>S/4HANA Embedded Analytics: low complexity + real-time</li>
+                  <li>SAP Datasphere / BDC: high reuse + high value</li>
+                  <li>Databricks: high AI/ML need or high complexity</li>
+                  <li>SAP BW HANA Cloud: BW modernization or reuse-first lift</li>
                   <li>Retire: low value + low reuse + stale usage</li>
                 </ul>
               </div>

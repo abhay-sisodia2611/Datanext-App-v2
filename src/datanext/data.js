@@ -27,19 +27,27 @@ const reportNames = [
   'Margin Analysis', 'Working Capital', 'DSO Tracking', 'Forecast Accuracy', 'Production Efficiency', 'Supplier Scorecard', 'Territory Performance', 'Churn Analysis'
 ];
 
-const deriveMigrationPath = ({ compositeScore, criteriaScores, sourceType }) => {
+const pathOptions = [
+  'S/4HANA Embedded Analytics',
+  'SAP Datasphere / BDC',
+  'Databricks',
+  'SAP BW HANA Cloud'
+];
+
+const deriveMigrationPath = ({ compositeScore, criteriaScores, sourceType, idx }) => {
   const businessValue = criteriaScores[2];
   const dataComplexity = criteriaScores[3];
   const realTime = criteriaScores[5];
   const reusePotential = criteriaScores[6];
   const aiReadiness = criteriaScores[8];
+  const basePath = pathOptions[idx % pathOptions.length];
 
   if (businessValue <= 2 && compositeScore < 2) return { path: 'Retire', status: 'Deprecated', color: palette.warning };
   if (businessValue <= 3 && reusePotential >= 4) return { path: 'Retire', status: 'Redundant', color: palette.neutral };
-  if (realTime <= 2 && dataComplexity <= 2 && sourceType !== 'Databricks') return { path: 'Embedded Analytics', status: 'Needed', color: palette.primary };
-  if (aiReadiness <= 2 || dataComplexity >= 4) return { path: 'Data Lake', status: 'Needed', color: palette.accentBlue };
   if (reusePotential <= 2) return { path: 'Retain', status: 'Needed', color: palette.primaryStrong };
-  return { path: 'Datasphere/BDC', status: 'Needed', color: palette.accentPurple };
+  if (realTime <= 2 && dataComplexity <= 2 && sourceType !== 'Databricks') return { path: 'S/4HANA Embedded Analytics', status: 'Needed', color: palette.primary };
+  if (aiReadiness <= 2 || dataComplexity >= 4) return { path: 'Databricks', status: 'Needed', color: palette.accentBlue };
+  return { path: basePath, status: 'Needed', color: palette.accentPurple };
 };
 
 export const generateReportCatalog = () => {
@@ -62,7 +70,7 @@ export const generateReportCatalog = () => {
       return sum + (score * criteria.weight / 100);
     }, 0);
 
-    const migration = deriveMigrationPath({ compositeScore, criteriaScores, sourceType });
+    const migration = deriveMigrationPath({ compositeScore, criteriaScores, sourceType, idx: i });
 
     return {
       id: `RPT-${String(i + 1).padStart(4, '0')}`,
@@ -109,9 +117,10 @@ export const getStats = (reportList) => ({
     'Databricks': reportList.filter(r => r.sourceType === 'Databricks').length
   },
   byPath: {
-    'Embedded Analytics': reportList.filter(r => r.migrationPath === 'Embedded Analytics').length,
-    'Datasphere/BDC': reportList.filter(r => r.migrationPath === 'Datasphere/BDC').length,
-    'Data Lake': reportList.filter(r => r.migrationPath === 'Data Lake').length,
+    'S/4HANA Embedded Analytics': reportList.filter(r => r.migrationPath === 'S/4HANA Embedded Analytics').length,
+    'SAP Datasphere / BDC': reportList.filter(r => r.migrationPath === 'SAP Datasphere / BDC').length,
+    'Databricks': reportList.filter(r => r.migrationPath === 'Databricks').length,
+    'SAP BW HANA Cloud': reportList.filter(r => r.migrationPath === 'SAP BW HANA Cloud').length,
     'Retain': reportList.filter(r => r.migrationPath === 'Retain').length,
     'Retire': reportList.filter(r => r.migrationPath === 'Retire').length
   }
