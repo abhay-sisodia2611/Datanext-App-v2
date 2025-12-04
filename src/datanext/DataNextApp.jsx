@@ -108,7 +108,7 @@ const KnowledgeGraph = ({ reports, filter, onNodeClick, isClassifying }) => {
   );
 };
 
-const ReportCatalog = ({ reports, onRowClick }) => {
+const ReportCatalog = ({ reports, onRowClick, showStatusMigration = false }) => {
   const [filterArea, setFilterArea] = useState('All');
   const [filterSource, setFilterSource] = useState('All');
   const [search, setSearch] = useState('');
@@ -125,6 +125,11 @@ const ReportCatalog = ({ reports, onRowClick }) => {
     'SAP ABAP': { bg: '#FEF3C7', text: '#B45309' },
     'SAP BW': { bg: '#DBEAFE', text: '#1D4ED8' },
     'Databricks': { bg: '#F3E8FF', text: '#7C3AED' }
+  };
+  const statusColors = {
+    Needed: { bg: palette.primarySoft, text: palette.primaryStrong },
+    Redundant: { bg: '#F3F4F6', text: palette.muted },
+    Deprecated: { bg: '#FEF2F2', text: palette.warning }
   };
 
   return (
@@ -148,7 +153,9 @@ const ReportCatalog = ({ reports, onRowClick }) => {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <thead style={{ position: 'sticky', top: 0, background: palette.surface }}>
             <tr style={{ background: palette.bg }}>
-              {['Report ID', 'Name', 'Source', 'Functional Area', 'Category', 'Data Sources', 'KPIs', 'Refresh', 'Owner'].map(header => (
+              {['Report ID', 'Name', 'Source', 'Functional Area', 'Category', 'Data Sources', 'KPIs', 'Refresh', 'Owner']
+                .concat(showStatusMigration ? ['Status', 'Migration Path'] : [])
+                .map(header => (
                 <th key={header} style={{ padding: '10px 8px', textAlign: 'left', fontWeight: 700, color: palette.text, borderBottom: `2px solid ${palette.border}`, whiteSpace: 'nowrap' }}>{header}</th>
               ))}
             </tr>
@@ -169,6 +176,16 @@ const ReportCatalog = ({ reports, onRowClick }) => {
                 <td style={{ padding: '10px 8px', borderBottom: `1px solid ${palette.border}`, color: palette.muted }}>{report.kpiExamples.join(', ')}</td>
                 <td style={{ padding: '10px 8px', borderBottom: `1px solid ${palette.border}`, color: palette.muted }}>{report.refreshFrequency}</td>
                 <td style={{ padding: '10px 8px', borderBottom: `1px solid ${palette.border}`, color: palette.text }}>{report.businessOwner}</td>
+                {showStatusMigration && (
+                  <>
+                    <td style={{ padding: '10px 8px', borderBottom: `1px solid ${palette.border}` }}>
+                      <span style={{ padding: '4px 8px', borderRadius: radii.sm, background: statusColors[report.status].bg, color: statusColors[report.status].text, fontWeight: 700 }}>
+                        {report.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: '10px 8px', borderBottom: `1px solid ${palette.border}`, color: palette.text, fontWeight: 600 }}>{report.migrationPath}</td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
@@ -506,6 +523,7 @@ const Sidebar = ({ active, setActive }) => {
     { id: 'catalog', label: 'Report Catalog' },
     { id: 'graph', label: 'Knowledge Graph' },
     { id: 'criteria', label: 'Decision Framework' },
+    { id: 'status', label: 'Status & Migration' },
     { id: 'matrix', label: 'Migration Matrix' },
     { id: 'walkthrough', label: 'Demo Walkthrough' },
     { id: 'plan', label: 'Implementation Plan' }
@@ -600,6 +618,7 @@ export default function DataNextApp() {
               {activeView === 'dashboard' && 'Analytics Rationalization Dashboard'}
               {activeView === 'catalog' && 'Report Catalog'}
               {activeView === 'criteria' && 'Decision Criteria Framework'}
+              {activeView === 'status' && 'Status & Migration'}
               {activeView === 'graph' && 'Knowledge Graph Explorer'}
               {activeView === 'matrix' && 'Migration Recommendation Matrix'}
               {activeView === 'walkthrough' && 'Demo Walkthrough'}
@@ -709,6 +728,12 @@ export default function DataNextApp() {
 
         {activeView === 'criteria' && (
           <DecisionCriteriaPanel criteria={criteria} onWeightChange={handleWeightChange} />
+        )}
+
+        {activeView === 'status' && (
+          <Section title="Status & Migration" subtitle="Full catalog view with status and migration path">
+            <ReportCatalog reports={seedReports} onRowClick={setSelectedReport} showStatusMigration />
+          </Section>
         )}
 
         {activeView === 'graph' && (
