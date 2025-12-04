@@ -42,12 +42,12 @@ const deriveMigrationPath = ({ compositeScore, criteriaScores, sourceType, idx }
   const aiReadiness = criteriaScores[8];
   const basePath = pathOptions[idx % pathOptions.length];
 
-  if (businessValue <= 2 && compositeScore < 2) return { path: 'Retire', status: 'Deprecated', color: palette.warning };
-  if (businessValue <= 3 && reusePotential >= 4) return { path: 'Retire', status: 'Redundant', color: palette.neutral };
-  if (reusePotential <= 2) return { path: 'Retain', status: 'Needed', color: palette.primaryStrong };
-  if (realTime <= 2 && dataComplexity <= 2 && sourceType !== 'Databricks') return { path: 'S/4HANA Embedded Analytics', status: 'Needed', color: palette.primary };
-  if (aiReadiness <= 2 || dataComplexity >= 4) return { path: 'Databricks', status: 'Needed', color: palette.accentBlue };
-  return { path: basePath, status: 'Needed', color: palette.accentPurple };
+  if (businessValue <= 2 && compositeScore < 2) return { path: 'Retire', status: 'Retire', color: palette.warning };
+  if (businessValue <= 3 && reusePotential >= 4) return { path: 'Retire', status: 'Retire', color: palette.warning };
+  if (reusePotential <= 2) return { path: basePath, status: 'Retain', color: palette.primaryStrong };
+  if (realTime <= 2 && dataComplexity <= 2 && sourceType !== 'Databricks') return { path: 'S/4HANA Embedded Analytics', status: 'Retain', color: palette.primary };
+  if (aiReadiness <= 2 || dataComplexity >= 4) return { path: 'Databricks', status: 'Retain', color: palette.accentBlue };
+  return { path: basePath, status: 'Retain', color: palette.accentPurple };
 };
 
 export const generateReportCatalog = () => {
@@ -106,22 +106,29 @@ export const generateReportCatalog = () => {
 
 export const reports = generateReportCatalog();
 
-export const getStats = (reportList) => ({
-  total: reportList.length,
-  needed: reportList.filter(r => r.status === 'Needed').length,
-  redundant: reportList.filter(r => r.status === 'Redundant').length,
-  deprecated: reportList.filter(r => r.status === 'Deprecated').length,
-  bySource: {
-    'SAP ABAP': reportList.filter(r => r.sourceType === 'SAP ABAP').length,
-    'SAP BW': reportList.filter(r => r.sourceType === 'SAP BW').length,
-    'Databricks': reportList.filter(r => r.sourceType === 'Databricks').length
-  },
-  byPath: {
-    'S/4HANA Embedded Analytics': reportList.filter(r => r.migrationPath === 'S/4HANA Embedded Analytics').length,
-    'SAP Datasphere / BDC': reportList.filter(r => r.migrationPath === 'SAP Datasphere / BDC').length,
-    'Databricks': reportList.filter(r => r.migrationPath === 'Databricks').length,
-    'SAP BW HANA Cloud': reportList.filter(r => r.migrationPath === 'SAP BW HANA Cloud').length,
-    'Retain': reportList.filter(r => r.migrationPath === 'Retain').length,
-    'Retire': reportList.filter(r => r.migrationPath === 'Retire').length
-  }
-});
+export const getStats = (reportList) => {
+  const retainStatuses = new Set(['Retain', 'Needed']);
+  const retireStatuses = new Set(['Retire', 'Deprecated']);
+  const retain = reportList.filter(r => retainStatuses.has(r.status)).length;
+  const retire = reportList.filter(r => retireStatuses.has(r.status)).length;
+
+  return {
+    total: reportList.length,
+    retain,
+    retire,
+    pending: Math.max(reportList.length - retain - retire, 0),
+    bySource: {
+      'SAP ABAP': reportList.filter(r => r.sourceType === 'SAP ABAP').length,
+      'SAP BW': reportList.filter(r => r.sourceType === 'SAP BW').length,
+      'Databricks': reportList.filter(r => r.sourceType === 'Databricks').length
+    },
+    byPath: {
+      'S/4HANA Embedded Analytics': reportList.filter(r => r.migrationPath === 'S/4HANA Embedded Analytics').length,
+      'SAP Datasphere / BDC': reportList.filter(r => r.migrationPath === 'SAP Datasphere / BDC').length,
+      'Databricks': reportList.filter(r => r.migrationPath === 'Databricks').length,
+      'SAP BW HANA Cloud': reportList.filter(r => r.migrationPath === 'SAP BW HANA Cloud').length,
+      'Retain': retain,
+      'Retire': retire
+    }
+  };
+};

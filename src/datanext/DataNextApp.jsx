@@ -62,9 +62,8 @@ const KnowledgeGraph = ({ reports, filter, onNodeClick, isClassifying }) => {
   });
 
   const statusColor = (status) => {
-    if (status === 'Needed') return palette.primary;
-    if (status === 'Redundant') return palette.neutral;
-    return palette.warning;
+    if (status === 'Retire') return palette.warning;
+    return palette.primaryStrong;
   };
 
   return (
@@ -129,7 +128,9 @@ const ReportCatalog = ({ reports, onRowClick, showStatusMigration = false }) => 
   const statusColors = {
     Needed: { bg: palette.primarySoft, text: palette.primaryStrong },
     Redundant: { bg: '#F3F4F6', text: palette.muted },
-    Deprecated: { bg: '#FEF2F2', text: palette.warning }
+    Deprecated: { bg: '#FEF2F2', text: palette.warning },
+    Retain: { bg: palette.primarySoft, text: palette.primaryStrong },
+    Retire: { bg: '#FEF2F2', text: palette.warning }
   };
 
   return (
@@ -179,11 +180,19 @@ const ReportCatalog = ({ reports, onRowClick, showStatusMigration = false }) => 
                 {showStatusMigration && (
                   <>
                     <td style={{ padding: '10px 8px', borderBottom: `1px solid ${palette.border}` }}>
-                      <span style={{ padding: '4px 8px', borderRadius: radii.sm, background: statusColors[report.status].bg, color: statusColors[report.status].text, fontWeight: 700 }}>
-                        {report.status}
-                      </span>
+                      {(() => {
+                        const statusLabel = report.migrationPath === 'Retain' ? 'Retain' : report.migrationPath === 'Retire' ? 'Retire' : report.status;
+                        const colors = statusColors[statusLabel] || { bg: palette.bg, text: palette.text };
+                        return (
+                          <span style={{ padding: '4px 8px', borderRadius: radii.sm, background: colors.bg, color: colors.text, fontWeight: 700 }}>
+                            {statusLabel}
+                          </span>
+                        );
+                      })()}
                     </td>
-                    <td style={{ padding: '10px 8px', borderBottom: `1px solid ${palette.border}`, color: palette.text, fontWeight: 600 }}>{report.migrationPath}</td>
+                    <td style={{ padding: '10px 8px', borderBottom: `1px solid ${palette.border}`, color: palette.text, fontWeight: 600 }}>
+                      {report.migrationPath === 'Retire' ? '' : report.migrationPath}
+                    </td>
                   </>
                 )}
               </tr>
@@ -642,18 +651,18 @@ export default function DataNextApp() {
           <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
               <StatsCard label="Total Reports" value={stats.total} subValue="In catalog" />
-              <StatsCard label="Needed" value={stats.needed} subValue={`${Math.round(stats.needed / stats.total * 100)}% to migrate`} />
-              <StatsCard label="Redundant" value={stats.redundant} color={palette.neutral} subValue="Candidates to consolidate" />
-              <StatsCard label="Deprecated" value={stats.deprecated} color={palette.warning} subValue="Retire candidates" />
+              <StatsCard label="Retain" value={stats.retain} subValue={`${Math.round(stats.retain / stats.total * 100)}% retained`} />
+              <StatsCard label="Retire" value={stats.retire} color={palette.warning} subValue={`${Math.round(stats.retire / stats.total * 100)}% retiring`} />
+              <StatsCard label="Pending Review" value={stats.pending} color={palette.neutral} subValue="Balance to classify" />
             </div>
             <Section title="Readiness Snapshot" subtitle="Visual summary of migration readiness and source mix">
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
                 <div style={{ ...cardStyle, border: `1px solid ${palette.border}` }}>
                   <div style={{ fontWeight: 700, color: palette.text, marginBottom: 8 }}>Migration Readiness</div>
                   <div style={{ height: 12, background: palette.bg, borderRadius: radii.sm, overflow: 'hidden' }}>
-                    <div style={{ width: `${Math.round(stats.needed / stats.total * 100)}%`, height: '100%', background: palette.primary }} />
+                    <div style={{ width: `${Math.round(stats.retain / stats.total * 100)}%`, height: '100%', background: palette.primary }} />
                   </div>
-                  <div style={{ marginTop: 6, color: palette.muted, fontSize: 13 }}>{Math.round(stats.needed / stats.total * 100)}% needed, {Math.round((stats.redundant + stats.deprecated) / stats.total * 100)}% to rationalize</div>
+                  <div style={{ marginTop: 6, color: palette.muted, fontSize: 13 }}>{Math.round(stats.retain / stats.total * 100)}% retain, {Math.round(stats.retire / stats.total * 100)}% retire</div>
                 </div>
                 <div style={{ ...cardStyle, border: `1px solid ${palette.border}` }}>
                   <div style={{ fontWeight: 700, color: palette.text, marginBottom: 8 }}>Source Composition</div>
@@ -743,7 +752,7 @@ export default function DataNextApp() {
             subtitle="Filter by status to validate classification impact and knowledge base coverage"
             actions={(
               <div style={{ display: 'flex', gap: 8 }}>
-                {['All', 'Needed', 'Redundant', 'Deprecated'].map(s => (
+                {['All', 'Retain', 'Retire'].map(s => (
                   <button key={s} onClick={() => setStatusFilter(s)} style={{ padding: '6px 12px', borderRadius: radii.md, border: `1px solid ${statusFilter === s ? palette.primary : palette.border}`, background: statusFilter === s ? palette.primarySoft : palette.surface, color: statusFilter === s ? palette.primaryStrong : palette.text, cursor: 'pointer' }}>
                     {s}
                   </button>
@@ -779,7 +788,7 @@ export default function DataNextApp() {
                 <div style={{ ...cardStyle, border: `1px solid ${palette.border}` }}>
                   <div style={{ fontWeight: 700, color: palette.text }}>Legend</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6, color: palette.muted, fontSize: 13 }}>
-                    {[{ label: 'Needed', color: palette.primary }, { label: 'Redundant', color: palette.neutral }, { label: 'Deprecated', color: palette.warning }].map(item => (
+                    {[{ label: 'Retain', color: palette.primaryStrong }, { label: 'Retire', color: palette.warning }].map(item => (
                       <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ width: 10, height: 10, borderRadius: '50%', background: item.color, display: 'inline-block' }} />
                         <span style={{ color: item.color === palette.primary ? palette.text : item.color }}>{item.label}</span>
