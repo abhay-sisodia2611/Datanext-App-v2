@@ -247,8 +247,17 @@ const MigrationMatrix = ({ reports }) => {
   const targets = ['S/4HANA Embedded Analytics', 'SAP Datasphere / BDC', 'Databricks', 'SAP BW HANA Cloud', 'Retain', 'Retire'];
   const counts = {};
   sources.forEach(s => { counts[s] = {}; targets.forEach(t => { counts[s][t] = 0; }); });
-  reports.forEach(r => { counts[r.sourceType][r.migrationPath] += 1; });
-  const rowTotals = sources.map(s => targets.reduce((sum, t) => sum + counts[s][t], 0));
+
+  reports.forEach(r => {
+    if (r.status === 'Retire') {
+      counts[r.sourceType]['Retire'] += 1;
+    } else {
+      counts[r.sourceType][r.migrationPath] += 1;
+      counts[r.sourceType]['Retain'] += 1;
+    }
+  });
+
+  const rowTotals = sources.map(s => counts[s]['Retain'] + counts[s]['Retire']);
   const colTotals = targets.map(t => sources.reduce((sum, s) => sum + counts[s][t], 0));
   const grandTotal = reports.length;
   const cellColor = (t) => `${pathColors[t]}25`;
@@ -258,7 +267,7 @@ const MigrationMatrix = ({ reports }) => {
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, border: `1px solid ${palette.border}`, borderRadius: radii.md, overflow: 'hidden' }}>
         <thead>
           <tr>
-            <th style={{ padding: 12, textAlign: 'left', borderBottom: `2px solid ${palette.border}`, background: palette.bg }}>Source ΓåÆ Path</th>
+            <th style={{ padding: 12, textAlign: 'left', borderBottom: `2px solid ${palette.border}`, background: palette.bg }}>Source → Path</th>
             {targets.map(t => (
               <th key={t} style={{ padding: 12, textAlign: 'center', borderBottom: `2px solid ${palette.border}`, background: palette.bg, color: palette.text }}>{t}</th>
             ))}
